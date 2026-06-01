@@ -1,0 +1,164 @@
+/* EP0 — the entire product in Phase 1. One page, one question, one field.
+   Color tokens, type, and treatment are implemented exactly to the WAS-4
+   EP0 screen spec. Reduction is the correct answer to "should we add…". */
+
+:root {
+  --paper: #f7f4ef; /* warm off-white background — never #fff */
+  --ink: #2d2a26; /* soft warm near-black — question + typed text */
+  --hint: #a9a199; /* placeholder — quiet, present, never demanding */
+  --rule: #e2dcd3; /* input underline at rest */
+  --rule-focus: #cbbfa8; /* underline on focus — soft warm shift, no blue ring */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* One centered column, lifted ~6vh above true optical center. */
+.ep0-stage {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 32px;
+}
+
+.ep0-column {
+  width: 100%;
+  max-width: 560px;
+  margin-bottom: 6vh; /* lift above dead-center */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ep0-question {
+  margin: 0;
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+  text-align: center;
+}
+
+/* 40px deliberate gap between question and field. */
+.ep0-field {
+  margin-top: 40px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  text-align: center;
+  font: inherit;
+  font-size: 20px;
+  color: var(--ink);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule);
+  transition: border-color 240ms ease;
+}
+
+.ep0-field::placeholder {
+  color: var(--hint);
+  opacity: 1; /* Firefox lowers placeholder opacity by default */
+}
+
+.ep0-field:focus {
+  border-bottom-color: var(--rule-focus);
+}
+
+/* The system's first response, appearing on the same view below the field. */
+.ep0-reply {
+  margin-top: 40px;
+  width: 100%;
+  font-size: 20px;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--ink);
+}
+
+/* ─── Conversation thread (Turn 2+) ───────────────────────────────────────
+   Same column as EP0. User turns and system turns are distinguished by
+   position and weight, not color or decoration. The thread is quiet.
+   "Das reicht fuer jetzt." lives in the thread as the last system turn.
+   .conv-close is the single follow-up line — nothing after it. */
+
+.conv-thread {
+  width: 100%;
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* User message — right-aligned, slightly smaller, same ink */
+.conv-user {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+  text-align: right;
+  color: var(--ink);
+  opacity: 0.65;
+}
+
+/* System/assistant message — left-aligned (centered feels lecture-y), full weight */
+.conv-system,
+.conv-assistant {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--ink);
+}
+
+/* Pending indicator — three dots, same register, slightly dimmed */
+.conv-pending {
+  opacity: 0.35;
+}
+
+/* Screen 4 close — the only line after "Das reicht fuer jetzt."
+   Sits separately below the thread, quieter than system text. Nothing follows. */
+.conv-close {
+  margin-top: 24px;
+  width: 100%;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--hint);
+}
+
+/* When the thread is growing, keep the input below it without extra jump */
+.ep0-field + * {
+  margin-top: 0;
+}
+
+@media (max-width: 380px) {
+  .ep0-question {
+    font-size: 28px;
+  }
+  .ep0-field {
+    font-size: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ep0-field {
+    transition: none;
+  }
+}

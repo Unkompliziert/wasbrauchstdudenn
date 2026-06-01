@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>wasbrauchstdudenn.de</title>
+<style>
+  :root {
+    --paper:   #F7F4EF;   /* warm off-white, not glare-white */
+    --ink:     #2D2A26;   /* soft warm near-black */
+    --hint:    #A9A199;   /* quiet placeholder grey */
+    --rule:    #E2DCD3;   /* barely-there input underline */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino", Georgia, ui-serif, serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    display: flex;
+    align-items: center;          /* vertical centering */
+    justify-content: center;
+  }
+
+  /* The whole screen is one calm column, lifted slightly above optical center */
+  main {
+    width: 100%;
+    max-width: 560px;
+    padding: 0 32px;
+    margin-top: -6vh;             /* optical center sits a touch high */
+    text-align: center;
+  }
+
+  .question {
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1.3;
+    letter-spacing: 0.2px;
+    margin-bottom: 40px;          /* generous, quiet gap before input */
+  }
+
+  .field {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--ink);
+    padding: 10px 4px 14px;
+    border-bottom: 1px solid var(--rule);
+    transition: border-color 240ms ease;
+  }
+
+  .field::placeholder {
+    color: var(--hint);
+    font-style: normal;
+  }
+
+  .field:focus {
+    border-bottom-color: #CBBFA8; /* soft warm, no harsh focus ring */
+  }
+</style>
+</head>
+<body>
+  <main>
+    <p class="question">Was brauchst du denn?</p>
+    <input
+      class="field"
+      type="text"
+      autofocus
+      autocomplete="off"
+      enterkeyhint="send"
+      placeholder="Ein Satz reicht."
+      aria-label="Was brauchst du denn?"
+    />
+  </main>
+</body>
+</html>
