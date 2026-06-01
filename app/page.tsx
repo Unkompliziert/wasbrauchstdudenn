@@ -85,7 +85,7 @@ export default function Page() {
         {/* Conversation thread — invisible until first reply arrives */}
         {messages.length > 0 && (
           <div className="conv-thread">
-            {messages.map((m, i) => (
+            {messages.slice(-4).map((m, i) => (
               <p
                 key={i}
                 className={
