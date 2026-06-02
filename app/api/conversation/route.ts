@@ -21,7 +21,7 @@ async function logToSupabase(
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return;
 
-  await fetch(`${url}/rest/v1/conversations`, {
+  await fetch(`${url}/rest/v1/Conversations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
