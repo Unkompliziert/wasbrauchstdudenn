@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateReply, type Turn } from "@/lib/claude";
+import { generateReply, type Turn, type ConversationRoute } from "@/lib/claude";
 
 export const runtime = "nodejs";
 
@@ -10,6 +10,7 @@ interface RequestBody {
   message?: unknown;
   history?: unknown;
   session_id?: unknown;
+  route?: unknown;
 }
 
 async function logToSupabase(
@@ -52,6 +53,9 @@ export async function POST(request: Request) {
       ? body.session_id
       : crypto.randomUUID();
 
+  const route: ConversationRoute =
+    body.route === "concierge" ? "concierge" : "clarity";
+
   const rawHistory = Array.isArray(body.history) ? body.history : [];
   const history: Turn[] = rawHistory
     .slice(-MAX_HISTORY)
@@ -66,7 +70,7 @@ export async function POST(request: Request) {
   const fullHistory: Turn[] = [...history, { role: "user", content: message }];
 
   try {
-    const reply = await generateReply(fullHistory);
+    const reply = await generateReply(route, fullHistory);
 
     const isDone =
       reply.includes("Das reicht für jetzt") ||
