@@ -20,6 +20,7 @@ export default function Page() {
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
   const [detectedRoute, setDetectedRoute] = useState<DetectedRoute>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -47,14 +48,16 @@ export default function Page() {
       const res = await fetch("/api/conversation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, history, route: detectedRoute }),
+        body: JSON.stringify({ message: text, history, route: detectedRoute, session_id: sessionId }),
       });
       const data = (await res.json()) as {
         reply?: string;
         route?: DetectedRoute;
         done?: boolean;
+        session_id?: string;
       };
       if (data.route && detectedRoute === null) setDetectedRoute(data.route);
+if (data.session_id && !sessionId) setSessionId(data.session_id);
       if (data.reply) {
         setMessages((prev) => [
           ...prev,
