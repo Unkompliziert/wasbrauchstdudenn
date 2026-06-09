@@ -109,7 +109,7 @@ if (data.delegation_code) setDelegationCode(data.delegation_code);
         {/* Input — shown at all times until the session is done.
             On first load it matches EP0 exactly. After that it sits at
             the bottom of the thread, always ready. */}
-            {delegationCode && (
+{delegationCode && (
   <p className="conv-code">Dein Code: {delegationCode}</p>
 )}
         {!done && (
