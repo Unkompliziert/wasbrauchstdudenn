@@ -68,8 +68,24 @@ export async function POST(request: Request) {
       ? body.session_id
       : crypto.randomUUID();
 
+  const rawHistory = Array.isArray(body.history) ? body.history : [];
+
+  // Route auto-detection beim ersten Turn
+  const isFirstTurn = rawHistory.length === 0;
+
+  const conciergeKeywords = [
+    "termin", "buchen", "bestellen", "kaufen", "suchen", "finden",
+    "organisieren", "erledigen", "brauche einen", "brauche eine",
+    "kannst du", "bitte", "hilf mir", "massage", "handwerker",
+    "liefern", "reservieren", "anmelden", "abholen"
+  ];
+
+  const detectedConcierge = isFirstTurn &&
+    conciergeKeywords.some(kw => message.toLowerCase().includes(kw));
+
   const route: ConversationRoute =
-    body.route === "concierge" ? "concierge" : "clarity";
+    body.route === "concierge" ? "concierge" :
+    detectedConcierge ? "concierge" : "clarity";
 
   const awaitingDelegationConfirm = body.awaiting_delegation_confirm === true;
 
@@ -80,7 +96,6 @@ export async function POST(request: Request) {
   const isDelegation = awaitingDelegationConfirm && isConfirmation;
   const delegation_code = isDelegation ? generateCode() : undefined;
 
-  const rawHistory = Array.isArray(body.history) ? body.history : [];
   const history: Turn[] = rawHistory
     .slice(-MAX_HISTORY)
     .filter(
@@ -117,6 +132,7 @@ export async function POST(request: Request) {
       session_id,
       delegation_code,
       is_delegation_question: isDelegationQuestion,
+      route,
     });
   } catch (err) {
     const isApiKeyMissing =
