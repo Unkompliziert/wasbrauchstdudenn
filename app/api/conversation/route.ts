@@ -6,7 +6,6 @@ export const runtime = "nodejs";
 const MAX_LEN = 2000;
 const MAX_HISTORY = 20;
 
-// Lesbare deutsche Codes — zwei Wörter plus Zahl
 const ADJECTIVES = ["blauer", "stiller", "freier", "weiter", "ruhiger", "klarer", "sanfter", "warmer", "leiser", "tiefer"];
 const NOUNS = ["adler", "stein", "wind", "fluss", "berg", "wald", "morgen", "abend", "stern", "pfad"];
 
@@ -22,6 +21,7 @@ interface RequestBody {
   history?: unknown;
   session_id?: unknown;
   route?: unknown;
+  awaiting_delegation_confirm?: unknown;
 }
 
 async function logToSupabase(
@@ -71,6 +71,15 @@ export async function POST(request: Request) {
   const route: ConversationRoute =
     body.route === "concierge" ? "concierge" : "clarity";
 
+  const awaitingDelegationConfirm = body.awaiting_delegation_confirm === true;
+
+  const isConfirmation =
+    /^(ja|yes|okay|ok|gerne|bitte|mach das|klar|natürlich|sure)$/i
+      .test(message.trim());
+
+  const isDelegation = awaitingDelegationConfirm && isConfirmation;
+  const delegation_code = isDelegation ? generateCode() : undefined;
+
   const rawHistory = Array.isArray(body.history) ? body.history : [];
   const history: Turn[] = rawHistory
     .slice(-MAX_HISTORY)
@@ -91,11 +100,9 @@ export async function POST(request: Request) {
       reply.includes("Das reicht für jetzt") ||
       reply.includes("Das reicht fuer jetzt");
 
-    const isDelegation =
+    const isDelegationQuestion =
       reply.includes("Darf ich das für dich übernehmen") ||
       reply.includes("Darf ich das fuer dich uebernehmen");
-
-    const delegation_code = isDelegation ? generateCode() : undefined;
 
     const allMessages: Turn[] = [
       ...fullHistory,
@@ -104,7 +111,13 @@ export async function POST(request: Request) {
 
     await logToSupabase(session_id, allMessages, isDone, delegation_code);
 
-    return NextResponse.json({ reply, done: isDone, session_id, delegation_code });
+    return NextResponse.json({
+      reply,
+      done: isDone,
+      session_id,
+      delegation_code,
+      is_delegation_question: isDelegationQuestion,
+    });
   } catch (err) {
     const isApiKeyMissing =
       err instanceof Error && err.message.includes("ANTHROPIC_API_KEY");
