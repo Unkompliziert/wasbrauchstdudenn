@@ -21,6 +21,7 @@ export default function Page() {
   const [done, setDone] = useState(false);
   const [detectedRoute, setDetectedRoute] = useState<DetectedRoute>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [delegationCode, setDelegationCode] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -55,9 +56,11 @@ export default function Page() {
         route?: DetectedRoute;
         done?: boolean;
         session_id?: string;
+        delegation_code?: string;
       };
       if (data.route && detectedRoute === null) setDetectedRoute(data.route);
 if (data.session_id && !sessionId) setSessionId(data.session_id);
+if (data.delegation_code) setDelegationCode(data.delegation_code);
       if (data.reply) {
         setMessages((prev) => [
           ...prev,
@@ -106,6 +109,9 @@ if (data.session_id && !sessionId) setSessionId(data.session_id);
         {/* Input — shown at all times until the session is done.
             On first load it matches EP0 exactly. After that it sits at
             the bottom of the thread, always ready. */}
+            {delegationCode && (
+  <p className="conv-code">Dein Code: {delegationCode}</p>
+)}
         {!done && (
           <input
             ref={inputRef}

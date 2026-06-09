@@ -6,6 +6,17 @@ export const runtime = "nodejs";
 const MAX_LEN = 2000;
 const MAX_HISTORY = 20;
 
+// Lesbare deutsche Codes — zwei Wörter plus Zahl
+const ADJECTIVES = ["blauer", "stiller", "freier", "weiter", "ruhiger", "klarer", "sanfter", "warmer", "leiser", "tiefer"];
+const NOUNS = ["adler", "stein", "wind", "fluss", "berg", "wald", "morgen", "abend", "stern", "pfad"];
+
+function generateCode(): string {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  const num = Math.floor(Math.random() * 90) + 10;
+  return `${adj}-${noun}-${num}`;
+}
+
 interface RequestBody {
   message?: unknown;
   history?: unknown;
@@ -16,11 +27,15 @@ interface RequestBody {
 async function logToSupabase(
   session_id: string,
   messages: Turn[],
-  done: boolean
+  done: boolean,
+  delegation_code?: string
 ) {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return;
+
+  const payload: Record<string, unknown> = { session_id, messages, done };
+  if (delegation_code) payload.delegation_code = delegation_code;
 
   await fetch(`${url}/rest/v1/Conversations`, {
     method: "POST",
@@ -30,7 +45,7 @@ async function logToSupabase(
       Authorization: `Bearer ${key}`,
       Prefer: "resolution=merge-duplicates",
     },
-    body: JSON.stringify({ session_id, messages, done }),
+    body: JSON.stringify(payload),
   }).catch((e) => console.error("Supabase log error:", e));
 }
 
@@ -76,14 +91,20 @@ export async function POST(request: Request) {
       reply.includes("Das reicht für jetzt") ||
       reply.includes("Das reicht fuer jetzt");
 
+    const isDelegation =
+      reply.includes("Darf ich das für dich übernehmen") ||
+      reply.includes("Darf ich das fuer dich uebernehmen");
+
+    const delegation_code = isDelegation ? generateCode() : undefined;
+
     const allMessages: Turn[] = [
       ...fullHistory,
       { role: "assistant", content: reply },
     ];
 
-    await logToSupabase(session_id, allMessages, isDone);
+    await logToSupabase(session_id, allMessages, isDone, delegation_code);
 
-    return NextResponse.json({ reply, done: isDone, session_id });
+    return NextResponse.json({ reply, done: isDone, session_id, delegation_code });
   } catch (err) {
     const isApiKeyMissing =
       err instanceof Error && err.message.includes("ANTHROPIC_API_KEY");

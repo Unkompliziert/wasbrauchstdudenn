@@ -143,6 +143,14 @@ body {
   color: var(--hint);
 }
 
+.conv-code {
+  text-align: center;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted, #999);
+  margin: 1.5rem 0 0.5rem;
+}
+
 /* When the thread is growing, keep the input below it without extra jump */
 .ep0-field + * {
   margin-top: 0;
