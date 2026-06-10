@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type DetectedRoute = "clarity" | "concierge" | "unclear" | null;
-
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -14,7 +12,6 @@ export default function Page() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
-  const [detectedRoute, setDetectedRoute] = useState<DetectedRoute>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [delegationCode, setDelegationCode] = useState<string | null>(null);
   const [awaitingDelegationConfirm, setAwaitingDelegationConfirm] = useState(false);
@@ -38,6 +35,10 @@ export default function Page() {
     setValue("");
     setPending(true);
 
+    const now = new Date();
+    const current_time = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    const current_date = now.toLocaleDateString("de-DE");
+
     try {
       const res = await fetch("/api/conversation", {
         method: "POST",
@@ -45,20 +46,19 @@ export default function Page() {
         body: JSON.stringify({
           message: text,
           history,
-          route: detectedRoute,
           session_id: sessionId,
           awaiting_delegation_confirm: awaitingDelegationConfirm,
+          current_time,
+          current_date,
         }),
       });
       const data = (await res.json()) as {
         reply?: string;
-        route?: DetectedRoute;
         done?: boolean;
         session_id?: string;
         delegation_code?: string;
         is_delegation_question?: boolean;
       };
-      if (data.route && detectedRoute === null) setDetectedRoute(data.route);
       if (data.session_id && !sessionId) setSessionId(data.session_id);
       if (data.is_delegation_question) setAwaitingDelegationConfirm(true);
       if (data.delegation_code) {
@@ -135,7 +135,9 @@ export default function Page() {
         )}
 
         {done && (
-          <p className="conv-close">Du kannst morgen wiederkommen.</p>
+          <p className="conv-close">
+            {delegationCode ? "Ich melde mich." : "Du kannst morgen wiederkommen."}
+          </p>
         )}
 
         <div ref={bottomRef} />

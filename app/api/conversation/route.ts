@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generateReply, type Turn, type ConversationRoute } from "@/lib/claude";
+import { generateReply, type Turn } from "@/lib/claude";
 
 export const runtime = "nodejs";
 
@@ -20,8 +20,9 @@ interface RequestBody {
   message?: unknown;
   history?: unknown;
   session_id?: unknown;
-  route?: unknown;
   awaiting_delegation_confirm?: unknown;
+  current_time?: unknown;
+  current_date?: unknown;
 }
 
 async function logToSupabase(
@@ -68,24 +69,8 @@ export async function POST(request: Request) {
       ? body.session_id
       : crypto.randomUUID();
 
-  const rawHistory = Array.isArray(body.history) ? body.history : [];
-
-  // Route auto-detection beim ersten Turn
-  const isFirstTurn = rawHistory.length === 0;
-
-  const conciergeKeywords = [
-    "termin", "buchen", "bestellen", "kaufen", "suchen", "finden",
-    "organisieren", "erledigen", "brauche einen", "brauche eine",
-    "kannst du", "bitte", "hilf mir", "massage", "handwerker",
-    "liefern", "reservieren", "anmelden", "abholen"
-  ];
-
-  const detectedConcierge = isFirstTurn &&
-    conciergeKeywords.some(kw => message.toLowerCase().includes(kw));
-
-  const route: ConversationRoute =
-    body.route === "concierge" ? "concierge" :
-    detectedConcierge ? "concierge" : "clarity";
+  const currentTime = typeof body.current_time === "string" ? body.current_time : "";
+  const currentDate = typeof body.current_date === "string" ? body.current_date : "";
 
   const awaitingDelegationConfirm = body.awaiting_delegation_confirm === true;
 
@@ -95,6 +80,9 @@ export async function POST(request: Request) {
 
   const isDelegation = awaitingDelegationConfirm && isConfirmation;
   const delegation_code = isDelegation ? generateCode() : undefined;
+
+  const rawHistory = Array.isArray(body.history) ? body.history : [];
+  const isFirstTurn = rawHistory.length === 0;
 
   const history: Turn[] = rawHistory
     .slice(-MAX_HISTORY)
@@ -106,12 +94,28 @@ export async function POST(request: Request) {
         typeof t.content === "string"
     );
 
-  const fullHistory: Turn[] = [...history, { role: "user", content: message }];
+  const timeContext: Turn[] = currentTime && isFirstTurn ? [
+    {
+      role: "user",
+      content: `[Aktuelle Zeit: ${currentTime} Uhr, ${currentDate}]`,
+    },
+    {
+      role: "assistant",
+      content: "Verstanden.",
+    },
+  ] : [];
+
+  const fullHistory: Turn[] = [
+    ...timeContext,
+    ...history,
+    { role: "user", content: message },
+  ];
 
   try {
-    const reply = await generateReply(route, fullHistory);
+    const reply = await generateReply(fullHistory);
 
     const isDone =
+      isDelegation ||
       reply.includes("Das reicht für jetzt") ||
       reply.includes("Das reicht fuer jetzt");
 
@@ -120,7 +124,8 @@ export async function POST(request: Request) {
       reply.includes("Darf ich das fuer dich uebernehmen");
 
     const allMessages: Turn[] = [
-      ...fullHistory,
+      ...history,
+      { role: "user", content: message },
       { role: "assistant", content: reply },
     ];
 
@@ -132,7 +137,6 @@ export async function POST(request: Request) {
       session_id,
       delegation_code,
       is_delegation_question: isDelegationQuestion,
-      route,
     });
   } catch (err) {
     const isApiKeyMissing =
